@@ -1,0 +1,250 @@
+basePath: /
+definitions:
+  gin.H:
+    additionalProperties: {}
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  handlers.CreateEmailTemplate:
+    properties:
+      link:
+        type: string
+      message:
+        type: string
+      subject:
+        type: string
+    required:
+    - message
+    - subject
+    type: object
+  handlers.CreateLinkRequest:
+    properties:
+      email:
+        type: string
+      user_id:
+        type: string
+    required:
+    - email
+    - user_id
+    type: object
+  handlers.SendEmailToUsersRequest:
+    properties:
+      template_id:
+        type: integer
+      user_emails:
+        items:
+          $ref: '#/definitions/handlers.UserEmailMap'
+        type: array
+    required:
+    - template_id
+    - user_emails
+    type: object
+  handlers.UserEmailMap:
+    properties:
+      email:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.Email:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      link:
+        type: string
+      message:
+        type: string
+      subject:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  models.Links:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      has_opened:
+        type: boolean
+      id:
+        type: integer
+      magicLink:
+        type: string
+      times_clicked:
+        type: integer
+      updatedAt:
+        type: string
+      user_id:
+        type: string
+    type: object
+host: localhost:9000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for an email API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  version: "1.0"
+paths:
+  /emails:
+    get:
+      consumes:
+      - application/json
+      description: Get all email templates
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Email'
+            type: array
+      summary: List all email templates
+      tags:
+      - emails
+    post:
+      consumes:
+      - application/json
+      description: creates a new email template
+      parameters:
+      - description: Email data
+        in: body
+        name: link
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateEmailTemplate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Email'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Creates a new email template
+      tags:
+      - emails
+  /send-emails:
+    post:
+      consumes:
+      - application/json
+      description: sends the phising email provided by template id to a group of users
+      parameters:
+      - description: Email data
+        in: body
+        name: link
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendEmailToUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "402":
+          description: Payment Required
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Sends the phising mail to a group of users
+      tags:
+      - emails
+  /user-link:
+    post:
+      consumes:
+      - application/json
+      description: set user link
+      parameters:
+      - description: Link data
+        in: body
+        name: link
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Links'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set User Links
+      tags:
+      - users
+  /user-links:
+    get:
+      consumes:
+      - application/json
+      description: Get all users links
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Links'
+            type: array
+      summary: List all users links
+      tags:
+      - users
+  /user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Set has_opened to true
+      parameters:
+      - description: Link ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Links'
+      summary: Set has_opened to true
+      tags:
+      - users
+swagger: "2.0"
