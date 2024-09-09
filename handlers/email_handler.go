@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,7 +13,8 @@ import (
 )
 
 type EmailHandler struct {
-	db *gorm.DB
+	db           *gorm.DB
+	emailService *services.EmailManager
 }
 
 type CreateEmailTemplate struct {
@@ -33,8 +33,8 @@ type SendEmailToUsersRequest struct {
 	UserEmails []UserEmailMap `json:"user_emails" binding:"required"`
 }
 
-func NewEmailHandler(db *gorm.DB) *EmailHandler {
-	return &EmailHandler{db: db}
+func NewEmailHandler(db *gorm.DB, emailService *services.EmailManager) *EmailHandler {
+	return &EmailHandler{db: db, emailService: emailService}
 }
 
 // SendEmailToUsers godoc
@@ -50,12 +50,6 @@ func NewEmailHandler(db *gorm.DB) *EmailHandler {
 // @Router /send-emails [post]
 func (h *EmailHandler) SendEmailToUsers(c *gin.Context) {
 	var request SendEmailToUsersRequest
-	host := os.Getenv("EMAIL_HOST")
-	port := os.Getenv("EMAIL_PORT")
-	sender := os.Getenv("EMAIL_SENDER")
-	password := os.Getenv("EMAIL_PASSWORD")
-	emailManager := services.BuildEmailManager(host, port, sender, password)
-
 	err := c.ShouldBindJSON(&request)
 
 	if err != nil {
@@ -95,7 +89,7 @@ func (h *EmailHandler) SendEmailToUsers(c *gin.Context) {
 			continue
 		}
 		completeMessage := emailTemplate.Message + "\n" + emailTemplate.Link + link.MagicLink
-		_, err = emailManager.SendMail(link.Email, emailTemplate.Subject, completeMessage)
+		_, err = h.emailService.SendMail(link.Email, emailTemplate.Subject, completeMessage)
 
 		if err != nil {
 			log.Println("Error while sending email : ", err.Error())

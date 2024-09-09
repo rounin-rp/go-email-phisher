@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/rounin-rp/email-phisher/database"
 	"github.com/rounin-rp/email-phisher/docs"
 	"github.com/rounin-rp/email-phisher/handlers"
+	"github.com/rounin-rp/email-phisher/services"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -32,18 +34,26 @@ func main() {
 	if envErr != nil {
 		log.Fatal("Failed to read .env file")
 	}
+
 	r := gin.Default()
 
 	db := database.Connect()
 	docs.SwaggerInfo.Title = "Email Phisher API"
 	docs.SwaggerInfo.Version = "1.0"
+
+	host := os.Getenv("EMAIL_HOST")
+	port := os.Getenv("EMAIL_PORT")
+	sender := os.Getenv("EMAIL_SENDER")
+	password := os.Getenv("EMAIL_PASSWORD")
+	emailManager := services.BuildEmailManager(host, port, sender, password)
+
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "It Works!",
 		})
 	})
 
-	handlers.RegisterRoutes(r, db)
+	handlers.RegisterRoutes(r, db, &emailManager)
 	//r.GET("/swagger/*any", ginSwagger.WrapHandler(files.Handler))
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	err := r.Run(":9000")

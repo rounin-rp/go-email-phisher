@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rounin-rp/email-phisher/services"
 	"gorm.io/gorm"
 )
 
 // RegisterRoutes registers all the routes for the handlers
-func RegisterRoutes(router *gin.Engine, db *gorm.DB) {
+func RegisterRoutes(router *gin.Engine, db *gorm.DB, emailService *services.EmailManager) {
 	userHandler := NewUserHandler(db)
-	emailHandler := NewEmailHandler(db)
+	emailHandler := NewEmailHandler(db, emailService)
 
 	// Define all routes here
 	router.GET("/user-links", userHandler.GetAllUserLinks)
